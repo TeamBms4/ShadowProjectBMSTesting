@@ -1,4 +1,3 @@
 # ShadowProject_BMSTesting
 A battery management system (BMS) is an embedded system that protects the safety of the host-application operator, it protects the battery from abuse, it prolongs the battery life, it maintains the battery in a functional state and informs the host-application regarding how to make best use of the battery pack at this present point in time. 
 
-In this project, Vector software CANoe will be used to test the Battery management system. The main idea of this project is to automate the testing of BMS using CANoe and CAPL scripting. Automation will help in ease the testing process whenever there is upgradation new feature in the BMS. With CANoe, a test report will be generated. This report will consist of voltage pattern at different scenarios and features of the BMS will be noted down with test case status.
