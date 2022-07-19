@@ -1,0 +1,265 @@
+/*@!Encoding:1252*/
+includes
+{
+  #include "NewFile1.cin"
+}
+
+
+
+variables
+{
+  
+  dword gPortNo=2; /*COM2*/
+  dword  gBaudRate=9600;
+  dword  gDataBits=8;
+  dword  gStopBits=2;
+  dword  gParity = 0;/*0-NOPARITY,1-ODDPARITY,2-EVENPARITY*/
+  int iterator;
+  double Get_Value=0.00;
+ 
+  // GLOBAL
+  const int kBUFFER_SIZE = 1000;
+  const int kINFO        = 1;
+  const int kWARN        = 2;
+  const int kERROR       = 3;
+  // data is copied from callback buffer to gReceiverBuffer (collects data)
+  byte gReceiverCallbackBuffer[kBUFFER_SIZE];
+
+  byte gReceiverBuffer[kBUFFER_SIZE];
+  byte gEmptyBuffer   [kBUFFER_SIZE];
+  long gNumberOfReceivedBytes = 0;
+  char StrData[100],StrData2[100];
+ //char Readvoltage[20]="MEAS:VOLT?\r";
+  //char ReadCurrent[20]="MEAS:CURR?\r";
+  // state variable
+  msTimer tim;
+  byte gSending = 0;
+}
+
+on preStart
+{
+   InitSerialPort();
+}       
+
+on start
+{
+  con.contactor_Signal=1;
+  if (con.contactor_Signal==1)
+  {
+   @measure::relay_state=1;
+  }
+   output(con);
+  settimer(tim, 3000);
+}
+on timer tim
+{
+  
+if(@temp::temp_con<temp_ll)
+{
+    write("undertemp");
+    con.heater=1;
+    output(con);
+    con.liq_cooler=0;
+    @temp::temp_heater=con.heater;
+    @temp::temp_cooler=con.liq_cooler;
+}
+else if (temp_ext>@temp::temp_con>temp_ul)
+{
+    write("overtemp");
+    con.liq_cooler=1;
+    con.heater=0;
+    @temp::temp_heater=con.heater;
+    @temp::temp_cooler=con.liq_cooler;
+}
+ else if(temp_ext<@temp::temp_con)
+{ 
+   con.liq_cooler=1;
+   @temp::temp_cooler=con.liq_cooler;
+   con.heater=0;
+   @temp::temp_heater=con.heater;
+   con.contactor_Signal=0;
+   @temp::temp_contactor=con.contactor_Signal;
+}
+else
+{
+   con.liq_cooler=0;
+   con.heater=0; 
+   @temp::temp_heater=con.heater;
+   @temp::temp_cooler=con.liq_cooler;
+}
+
+setTimer(tim,3000);
+}
+
+on message airbag
+{
+  write("accident");
+  con.contactor_Signal=0;
+}
+on sysvar_update measure::vol
+{
+  if (iso_res> (500*vol_spec))
+  {
+    
+  }
+  else
+  {
+    write("Isolation resistance is less, isolation fault");
+//    con.contactor_Signal=0;
+  }
+  
+  if(@measure::Car_state==1||@measure::Car_state==2)
+ {
+    if (@measure::vol>Vol_ul)
+  {
+    write("OverCharging");
+    con.contactor_Signal=0;
+   tel.Vol_con=2;  
+  }
+  
+ }
+    if (0<@measure::vol<Vol_ll)
+  {
+    write("Overdischarge");
+    con.contactor_Signal=0;
+    tel.Vol_con=1;  
+  }
+ }
+on sysvar_update measure::cur
+{
+  if (iso_res> (500*vol_spec))
+  {
+    con.contactor_Signal=1;
+  @isolation::iso_con=con.contactor_Signal;
+  }
+  else
+  {
+    write("Isolation resistance is less, isolation fault");
+       //con.contactor_Signal=0;
+  @isolation::iso_con=con.contactor_Signal;
+
+  }
+  
+  if(@measure::Car_state==3)
+  {
+    if (@measure::cur>cur_spec)
+  {
+    write("overcurrent");
+    con.contactor_Signal=0;
+  }
+  }
+}
+
+void InitSerialPort()
+{
+
+  if(Rs232Close(gPortNo)==1)
+    writeLineEx(0,kINFO, "Serial port %d successfully closed.", gPortNo);    
+  else
+    writeLineEx(0,kERROR,"An error occurred during closing of the serial port %d.", gPortNo);    
+
+  // set state (close aborts all open requests)
+  gSending = 0;
+  
+  // open the serial port (comes up with Windows defaults)
+  if(Rs232Open(gPortNo)==1)
+    writeLineEx(0,kINFO, "Serial port %d successfully opened.", gPortNo);    
+  else
+    writeLineEx(0,kERROR,"An error occurred during opening of the serial port %d.", gPortNo);
+  
+  // configure the serial port
+  // - just take the panel content
+  if(Rs232Configure(gPortNo,gBaudRate,gDataBits,gStopBits,gParity)==1)
+    writeLineEx(0,kINFO, "Serial port %d successfully initialized.", gPortNo);    
+  else
+    writeLineEx(0,kERROR,"An error occurred during initialization of the serial port %d.", gPortNo); 
+
+  // set buffer for reception (otherwise callback would not work)
+  if(Rs232Receive(gPortNo, gReceiverCallbackBuffer, kBUFFER_SIZE))
+    writeLineEx(0,kINFO, "Receiver buffer for serial port %d successfully set.", gPortNo);    
+  else
+    writeLineEx(0,kERROR,"An error occurred during setting the receiver buffer for serial port %d.", gPortNo);
+  
+  Rs232SetHandshake(gPortNo,128,0,0,0,0);
+}
+
+
+
+RS232OnReceive(dword port, byte buffer1[], dword number)
+{
+  char StrData[20];
+  dword numberOfBytesToCopy;
+  numberOfBytesToCopy = number;
+  
+  write("Callback function called"); 
+  
+  if ( numberOfBytesToCopy==0 )
+  {
+    return; // nothing to add
+  }
+  
+  CopyBuffer(gReceiverBuffer,gNumberOfReceivedBytes,buffer1,numberOfBytesToCopy);
+  gNumberOfReceivedBytes += numberOfBytesToCopy; 
+  
+  for(iterator=0;iterator<gNumberOfReceivedBytes;iterator++)
+  StrData[iterator]=gReceiverBuffer[iterator];
+  
+  StrData[iterator-1]='\0';  
+  gNumberOfReceivedBytes = 0;
+  
+  Get_Value=atodbl(StrData);
+  if (@powerControl::send==0)
+  {
+    @measure::vol = Get_Value;
+  }
+    else
+  {
+    @measure::cur = Get_Value;
+  }
+ }
+
+CopyBuffer( byte destBuffer[], dword destOffset, byte srcBuffer[], dword srcNumber )
+{
+  dword i;
+
+  for (i=0; i<srcNumber; i++)
+  {
+    destBuffer[destOffset+i] = srcBuffer[i];
+  }
+}
+
+
+Rs232OnSend( dword port, byte buffer[], dword number )
+{
+  // set state
+  gSending = 0;
+
+  writeLineEx(0,kINFO,"Transmission of %d bytes from port %d completed !", number, port);
+}
+
+
+
+RS232OnError( dword port, dword errorFlags )
+{
+  // set state
+  gSending = 0;
+
+  writeLineEx(0,kERROR,"Error handler called with error code %d !", errorFlags);
+
+  if ( errorFlags & 1 )
+    writeLineEx(0,1,"%d informs of send error",errorFlags);
+  if ( errorFlags & 2 )
+    writeLineEx(0,1,"%d informs of receive error",errorFlags);
+  if ( errorFlags & 4 )
+    writeLineEx(0,1,"%d informs of frame error",errorFlags);
+  if ( errorFlags & 8 )
+    writeLineEx(0,1,"%d informs of parity error",errorFlags);
+  if ( errorFlags & 16 )
+    writeLineEx(0,1,"%d informs of overrun error",errorFlags);
+  if ( errorFlags & 32 )
+    writeLineEx(0,1,"%d informs of receiver overrun error",errorFlags);
+  if ( errorFlags & 64 )
+    writeLineEx(0,1,"%d informs of break state",errorFlags);
+  if ( errorFlags & 128 )
+    writeLineEx(0,1,"%d informs of send timeout error",errorFlags);
+}

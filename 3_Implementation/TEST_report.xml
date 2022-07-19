@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<testmodule starttime="2022-07-19 12:49:01" timestamp="  14.630000" verdicts="2_basic" measurementid="544eea9c-8dde-475b-b44f-8b32fc6e247e">
+  <violation timestamp="  14.630000" type="warning" result="warn">This is only a DEMO variant of CANoe!</violation>
+  <testcase starttime="2022-07-19 12:49:01" timestamp="  14.630000">
+    <violation timestamp="  14.630000" type="warning" result="warn">This is only a DEMO variant of CANoe!</violation>
+    <teststep timestamp="  14.630000" type="user" ident="" result="fail">Fail, not detecting overcharge</teststep>
+    <verdict time="2022-07-19 12:49:01" timestamp="  14.630000" endtime="2022-07-19 12:49:01" endtimestamp="  14.630000" result="fail" />
+    <title>Voltage condtion</title>
+    <ident>voltage</ident>
+    <description> This test case covers BMS feature of detecting and control of  overcharging during charging condition and overdischarging during discharging condition of the battery</description>
+  </testcase>
+  <testcase starttime="2022-07-19 12:49:01" timestamp="  14.630000">
+    <violation timestamp="  14.630000" type="warning" result="warn">This is only a DEMO variant of CANoe!</violation>
+    <verdict time="2022-07-19 12:49:01" timestamp="  14.630000" endtime="2022-07-19 12:49:01" endtimestamp="  14.630000" result="pass" />
+    <title>current condtion</title>
+    <ident>current</ident>
+    <description>This test case covers BMS feature of detecting and control of  overcurrent of the battery</description>
+  </testcase>
+  <testcase starttime="2022-07-19 12:49:01" timestamp="  14.630000">
+    <violation timestamp="  14.630000" type="warning" result="warn">This is only a DEMO variant of CANoe!</violation>
+    <teststep timestamp="  14.630000" type="user" ident="" result="fail">Fail. over temp not detected</teststep>
+    <verdict time="2022-07-19 12:49:01" timestamp="  14.630000" endtime="2022-07-19 12:49:01" endtimestamp="  14.630000" result="fail" />
+    <title>temperature condtion</title>
+    <ident>temperature</ident>
+    <description>This test case covers BMS feature of detecting and control of  overtemperature and undertemperature of the battery</description>
+  </testcase>
+  <testcase starttime="2022-07-19 12:49:01" timestamp="  14.630000">
+    <violation timestamp="  14.630000" type="warning" result="warn">This is only a DEMO variant of CANoe!</violation>
+    <teststep timestamp="  14.630000" type="user" ident="" result="pass">Pass.Intial on condition power contactor working</teststep>
+    <verdict time="2022-07-19 12:49:01" timestamp="  14.630000" endtime="2022-07-19 12:49:01" endtimestamp="  14.630000" result="pass" />
+    <title>Relay condtion</title>
+    <ident>power Relay</ident>
+    <description>This test case covers BMS feature of check the working condition of the Power relay of the battery</description>
+  </testcase>
+  <testcase starttime="2022-07-19 12:49:01" timestamp="  14.630000">
+    <violation timestamp="  14.630000" type="warning" result="warn">This is only a DEMO variant of CANoe!</violation>
+    <verdict time="2022-07-19 12:49:01" timestamp="  14.630000" endtime="2022-07-19 12:49:01" endtimestamp="  14.630000" result="pass" />
+    <title> airbag and bms condtion</title>
+    <ident>accident_Condition</ident>
+    <description>This test case covers BMS feature of isolation of the battery during accident</description>
+  </testcase>
+  <testcase starttime="2022-07-19 12:49:01" timestamp="  14.630000">
+    <violation timestamp="  14.630000" type="warning" result="warn">This is only a DEMO variant of CANoe!</violation>
+    <verdict time="2022-07-19 12:49:01" timestamp="  14.630000" endtime="2022-07-19 12:49:01" endtimestamp="  14.630000" result="pass" />
+    <title> Isolation_Fault</title>
+    <ident>fault_Condition</ident>
+    <description>This test case covers BMS feature of fault detection of Isolation_fault  of the battery</description>
+  </testcase>
+  <verdict time="2022-07-19 12:49:01" timestamp="  14.630000" endtime="2022-07-19 12:49:01" endtimestamp="  14.630000" result="fail" />
+  <title>TEST</title>
+  <testlogfiles>
+  </testlogfiles>
+  <engineer>
+    <xinfo>
+      <name>Windows Login Name</name>
+      <description>Vishal</description>
+    </xinfo>
+  </engineer>
+  <testsetup>
+    <xinfo>
+      <name>Version</name>
+      <description>CANoe.ISO11783.J1939.CANopen.CAN.LIN.MOST.FlexRay.J1587.Ethernet.Car2x.AFDX.A429.Scope.SmartCharging [DEMO] 15.4.35 (SP4)</description>
+    </xinfo>
+    <xinfo>
+      <name>Configuration</name>
+      <description>E:\LTTS\New folder\powersupplyinc_dec\pps_Confi_decinc.cfg</description>
+    </xinfo>
+    <xinfo>
+      <name>Database BMSdb on CAN</name>
+      <description>E:\LTTS\New folder\powersupplyinc_dec\BMSdb.dbc (2022-07-15 14:49:14)</description>
+    </xinfo>
+    <xinfo>
+      <name>Test Module Name</name>
+      <description>TEST</description>
+    </xinfo>
+    <xinfo>
+      <name>Test Module File</name>
+      <description>E:\LTTS\New folder\powersupplyinc_dec\TEST.can</description>
+    </xinfo>
+    <xinfo>
+      <name>Last modification of Test Module File</name>
+      <description>2022-07-18, 15:56:38</description>
+    </xinfo>
+    <xinfo>
+      <name>Windows Computer Name</name>
+      <description>LAPTOP-RUE3U6TR</description>
+    </xinfo>
+    <xinfo>
+      <name>Nodelayer Module J1939TestServiceLibraryNL</name>
+      <description>J1939 Test Service Library for CANoe, Version 15.4.35.0, C:\Program Files\Vector CANoe 15\Exec32\J1939TestServiceLibraryNL.dll</description>
+    </xinfo>
+  </testsetup>
+</testmodule>
+<!--footprint="cd57e782a797506c36fa2b97a4705e95" version="1"-->

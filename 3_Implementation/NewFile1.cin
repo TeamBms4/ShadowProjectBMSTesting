@@ -1,0 +1,23 @@
+/*@!Encoding:1252*/
+includes
+{
+  
+}
+
+variables
+{
+  double vol_spec=12;
+  double cur_spec=7;
+  double Vol_ll=11.2;
+  double Vol_ul=12.6;
+  message BMS_Contactor con; //  Contactor=0 then HV is seperate to LV 
+  message BMS_Tel tel;
+  message airbag bag;
+  double temp_ll=1;
+  double temp_ul=5;
+  double temp_ext=8;
+  // signal Vol_con;
+  //signal Cur_con; // Vol_con=0 normal,1 under voltage,2 overvoltage Cur_con=normal,2 overcurrent; 
+
+}
+

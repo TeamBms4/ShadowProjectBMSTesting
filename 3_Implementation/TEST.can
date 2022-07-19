@@ -1,0 +1,163 @@
+/*@!Encoding:1252*/
+includes
+{
+  
+  #include "NewFile1.cin"
+}
+
+variables
+{
+  
+}
+
+testcase voltage_test()
+{  
+  testCaseTitle("voltage","Voltage condtion");
+  testCaseDescription(" This test case covers BMS feature of detecting and control of  overcharging during charging condition and overdischarging during discharging condition of the battery");
+  if(@measure::vol>=Vol_ul)
+   {
+    if(@telemetry::vol==2)
+    {
+    if(@telemetry::con==0)
+    testStepPass("pass, detecting overcharging and battery isolated");
+    else
+      testStepFail("Fail, Detecting Overcharging but battery not Isolated");
+    }
+    else
+      testStepFail("Fail, not detecting overcharge");
+  }
+  if (@measure::vol<Vol_ll)
+    
+    {
+          if(@telemetry::vol==1)
+      {
+      if (@telemetry::con==0)
+      testStepPass("pass. detecting overdischarge and battery Isolated");
+      else
+        testStepFail("fail. detecting overdischarge but battery not Isolated");
+      }
+      else
+        testStepFail("Fail. not detecting overdischarge ");
+    }
+        else
+    {
+      //testStepPass("Pass");
+    }
+}
+
+testcase current_test()
+{ 
+  testCaseTitle("current","current condtion");
+  testCaseDescription("This test case covers BMS feature of detecting and control of  overcurrent of the battery");
+  if(@measure::cur>cur_spec)
+   {
+    if (@telemetry::cur==1)
+    {
+    if(@telemetry::con==0)
+    testStepPass("Pass, detected overcurrent and disconnected the battery");
+    else
+    testStepFail("Fail, detected overcurrent but failed to disconnect battery");
+    }
+    else     
+    {
+      testStepFail("Fail, Not detected Overcurrent");
+    }
+    
+   }
+      else
+    {
+      //testStepPass("Pass");
+    }
+}
+
+testcase temperature_test()
+{  testCaseTitle("temperature","temperature condtion");
+  testCaseDescription("This test case covers BMS feature of detecting and control of  overtemperature and undertemperature of the battery");
+if(temp_ext<@temp::temp_con )
+ { 
+      if(@telemetry::tem==3)
+      {
+      if(@temp::temp_contactor==0)
+      {
+      if(@temp::temp_cooler==1 && @temp::temp_heater==0)
+      teststepPass("Pass.temp detected isolated and cooler on");
+      else
+        testStepFail("Fail. Contactor succussful but cooler off/heater on");
+      }
+      }
+      else
+        testStepFail("Fail. extreme temp not detected");
+  }
+else if (@temp::temp_con>temp_ul)
+  {
+      if(@telemetry::tem==2)
+      {
+      
+    if(@temp::temp_cooler==1&&@temp::temp_heater==0)
+    testStepPass("Pass.Cooler on and overtemp detected ");
+    else
+      testStepFail("Fail. overtemp detected but cooler not on");
+      }
+      else
+        testStepFail("Fail. over temp not detected");
+  }
+else if (@temp::temp_con<temp_ll)
+  {
+      if(@telemetry::tem==2)
+      {
+        if(@temp::temp_heater==1 && @temp::temp_cooler==0)
+      testStepPass("Pass undertemp detected and heater on");
+      else
+      testStepFail("Fail temp detected but heater not on");
+      }
+      else
+         testStepFail("Fail. under temp not detected");
+   } 
+}
+
+testcase keyon_test()
+{
+  testCaseTitle("power Relay","Relay condtion");
+  testCaseDescription("This test case covers BMS feature of check the working condition of the Power relay of the battery");
+  if(@measure::relay_state==1)
+    testStepPass("Pass.Intial on condition power contactor working");
+  else
+    testStepfail("Fail.Intial on condition power contactor not working");
+    
+}
+
+testcase accident_test()
+{
+  testCaseTitle("accident_Condition"," airbag and bms condtion");
+  testCaseDescription("This test case covers BMS feature of isolation of the battery during accident");
+  if(@airbag::airbag_signal==1)
+  { 
+    if (@telemetry::con==0)
+    testStepPass("Pass. Battery  isolated");
+  else
+    testStepFail("Fail. Battery not isolated");
+  }
+}
+
+ testcase IsolationFault_test()
+{
+  testCaseTitle("fault_Condition"," Isolation_Fault");
+  testCaseDescription("This test case covers BMS feature of fault detection of Isolation_fault  of the battery");
+
+  if (@isolation::iso_res< (500*vol_spec))
+  {
+    if(@telemetry::con==1) 
+     testStepFail("Fail, battery not disconnected after Isolation fault");
+  else
+    testStepPass("Pass, battery  disconnected after Isolation fault");
+  }
+}
+void mainTest()
+{
+  voltage_test();
+  current_test();
+  temperature_test();
+  keyon_test();
+  accident_test();
+  IsolationFault_test();
+}

@@ -1,0 +1,301 @@
+/*@!Encoding:1252*/
+
+variables
+{
+  dword  gPortNo=1; /*COM1*/
+  dword  gBaudRate=9600;
+  dword  gDataBits=8;
+  dword  gStopBits=2;
+  dword  gParity = 0;/*0-NOPARITY,1-ODDPARITY,2-EVENPARITY*/
+  
+  int i=0;
+  double x=0.00;
+  char tCurrent_check[100];  
+  byte tSendbuffer[500];
+  int tlength,titerator;
+  long low_int, high_int;
+  char h[100];
+  char tCurrent[20];
+   
+  const int kBUFFER_SIZE = 1000;
+  const int kINFO        = 1;
+  const int kWARN        = 2;
+  const int kERROR       = 3;
+  // data is copied from callback buffer to gReceiverBuffer (collects data)
+  byte gReceiverCallbackBuffer[kBUFFER_SIZE];
+
+  byte gReceiverBuffer[kBUFFER_SIZE];
+  byte gEmptyBuffer   [kBUFFER_SIZE];
+  long gNumberOfReceivedBytes = 0;
+  char StrData[100],StrData2[100];
+  char Readvoltage[20]="MEAS:VOLT?\r";
+  char ReadCurrent[20]="MEAS:CURR?\r";
+  byte gSending = 0;
+  mstimer tim;
+  msTimer tim1;
+  int Ret_Value=0;
+}
+
+
+on preStart
+{
+ InitSerialPort();
+}       
+
+ on start
+{
+   char Voltage_check[100];  
+  char Current[20]="0";
+  byte Sendbuffer[500];
+  int length,iterator;
+  char Current_check[100];
+  char Voltage[20]="0"; 
+
+  sysGetVariableString(sysvar::powerControl::V_con, Voltage_check, elcount(Voltage_check));
+  strncpy(Voltage,Voltage_check,elCount(Voltage_check));
+  length=strlen(Voltage);
+  write("length %d",length);
+  for(iterator=0;iterator<length;iterator++)
+  {
+  Sendbuffer[iterator]=Voltage[iterator];
+  }
+    RS232Send(gPortNo,Sendbuffer,length);
+}
+
+on sysVar powerControl::Set_vi
+{
+  char Voltage_check[100];  
+  char Current[20]="0";
+  byte Sendbuffer[500];
+  int length,iterator;
+  char Current_check[100];
+  char Voltage[20]="0"; 
+
+ if(@powerControl::Set_vi ==0) 
+{
+ 
+  @powerControl::Set_vi = 1;
+  
+   if(@powerControl::send==0)
+  {  
+  sysGetVariableString(sysvar::powerControl::V_con, Voltage_check, elcount(Voltage_check));
+  strncpy(Voltage,Voltage_check,elCount(Voltage_check));
+  length=strlen(Voltage);
+  write("length %d",length);
+  for(iterator=0;iterator<length;iterator++)
+  {
+  Sendbuffer[iterator]=Voltage[iterator];
+  }
+    RS232Send(gPortNo,Sendbuffer,length);
+  }
+  else
+  {
+  sysGetVariableString(sysvar::powerControl::I_con, Current_check, elcount(Current_check));
+  strncpy(Current,Current_check,elcount(Current_check));
+  length=strlen(Current);
+  write("length %d",length);
+  for(iterator=0;iterator<length;iterator++)
+  {
+    Sendbuffer[iterator]=Current[iterator];
+  }
+    RS232Send(gPortNo,Sendbuffer,length);
+  }
+}
+
+}
+
+
+on sysvar stepchange::incr_cur
+{
+  
+ if(@stepchange::incr_cur ==1 && @powerControl::send==1) 
+  {
+  
+  @stepchange::incr_cur = 0;
+  
+   setTimer(tim,@stepchange::step_time);
+    i=0;
+  } 
+
+
+}
+
+on timer tim
+{
+
+if(i==0)
+{
+sysGetVariableString(sysvar::stepchange::cur_low, tCurrent_check, elcount(tCurrent_check));
+  sysGetVariableString(sysvar::stepchange::cur_hig, h, elcount(h));
+    @stepchange::cur++;
+  high_int=atol(h);
+}
+  strncpy(tCurrent,tCurrent_check,elCount(tCurrent_check));
+  tlength=strlen(tCurrent);
+  write("length %d",tlength);  
+  for(titerator=0;titerator<tlength;titerator++)
+     tSendbuffer[titerator]=tCurrent[titerator];
+   RS232Send(gPortNo,tSendbuffer,tlength);
+    x=atodbl(tCurrent_check);
+    x=x+ @stepchange::stepcur;
+     _gcvt(x,4,tCurrent_check);
+  
+  if(x <= high_int) 
+  {
+    
+    i=i+1;
+    setTimer(tim,@stepchange::step_time);
+  }
+  else
+  {
+    i=0;
+    cancelTimer(tim);
+  }
+}
+
+
+on sysvar stepchange::dec_cur
+{
+  
+ if(@stepchange::dec_cur ==1&& @powerControl::send==1) 
+  {
+  
+  @stepchange::dec_cur = 0;
+  
+    setTimer(tim1,@stepchange::step_time);
+    i=0;
+  } 
+ 
+}
+
+on timer tim1
+{
+ if(i==0)
+  {
+   sysGetVariableString(sysvar::stepchange::cur_hig, tCurrent_check, elcount(tCurrent_check));
+   sysGetVariableString(sysvar::stepchange::cur_low, h, elcount(h));
+  
+   low_int=atol(h);
+  }
+  strncpy(tCurrent,tCurrent_check,elCount(tCurrent_check));
+  tlength=strlen(tCurrent);
+  write("length %d",tlength);  
+  for(titerator=0;titerator<tlength;titerator++)
+  tSendbuffer[titerator]=tCurrent[titerator];
+  RS232Send(gPortNo,tSendbuffer,tlength);
+    x=atodbl(tCurrent_check);
+    x= x-@stepchange::stepcur; 
+   _gcvt(x,4,tCurrent_check);
+  @stepchange::cur =x;
+  if(x >= low_int) 
+  {
+    i=i+1;
+  setTimer(tim1,@stepchange::step_time);
+  }
+  else
+  {
+    i=0;
+    cancelTimer(tim);
+  }
+ 
+}
+
+void InitSerialPort()
+{
+
+  if(Rs232Close(gPortNo)==1)
+    writeLineEx(0,kINFO, "Serial port %d successfully closed.", gPortNo);    
+  else
+    writeLineEx(0,kERROR,"An error occurred during closing of the serial port %d.", gPortNo);    
+
+  // set state (close aborts all open requests)
+  gSending = 0;
+  
+  // open the serial port (comes up with Windows defaults)
+  if(Rs232Open(gPortNo)==1)
+    writeLineEx(0,kINFO, "Serial port %d successfully opened.", gPortNo);    
+  else
+    writeLineEx(0,kERROR,"An error occurred during opening of the serial port %d.", gPortNo);
+  
+  // configure the serial port
+  // - just take the panel content
+  if(Rs232Configure(gPortNo,gBaudRate,gDataBits,gStopBits,gParity)==1)
+    writeLineEx(0,kINFO, "Serial port %d successfully initialized.", gPortNo);    
+  else
+    writeLineEx(0,kERROR,"An error occurred during initialization of the serial port %d.", gPortNo); 
+
+  // set buffer for reception (otherwise callback would not work)
+  if(Rs232Receive(gPortNo, gReceiverCallbackBuffer, kBUFFER_SIZE))
+    writeLineEx(0,kINFO, "Receiver buffer for serial port %d successfully set.", gPortNo);    
+  else
+    writeLineEx(0,kERROR,"An error occurred during setting the receiver buffer for serial port %d.", gPortNo);
+  
+  Rs232SetHandshake(gPortNo,128,0,0,0,0);
+}
+
+
+
+
+
+RS232OnReceive(dword port, byte buffer1[], dword number)
+{
+  char StrData[20];
+  dword numberOfBytesToCopy;
+  numberOfBytesToCopy = number;
+  
+  write("Callback function called"); 
+  
+  if ( numberOfBytesToCopy==0 )
+  {
+    return; // nothing to add
+  }
+  
+  CopyBuffer(gReceiverBuffer,gNumberOfReceivedBytes,buffer1,numberOfBytesToCopy);
+  gNumberOfReceivedBytes += numberOfBytesToCopy; 
+ }
+
+CopyBuffer( byte destBuffer[], dword destOffset, byte srcBuffer[], dword srcNumber )
+{
+  dword i;
+
+  for (i=0; i<srcNumber; i++)
+  {
+    destBuffer[destOffset+i] = srcBuffer[i];
+  }
+}
+
+
+Rs232OnSend( dword port, byte buffer[], dword number )
+{
+  // set state
+  gSending = 0;
+
+  writeLineEx(0,kINFO,"Transmission of %d bytes from port %d completed !", number, port);
+}
+
+
+
+RS232OnError( dword port, dword errorFlags )
+{
+  // set state
+  gSending = 0;
+
+  writeLineEx(0,kERROR,"Error handler called with error code %d !", errorFlags);
+
+  if ( errorFlags & 1 )
+    writeLineEx(0,1,"%d informs of send error",errorFlags);
+  if ( errorFlags & 2 )
+    writeLineEx(0,1,"%d informs of receive error",errorFlags);
+  if ( errorFlags & 4 )
+    writeLineEx(0,1,"%d informs of frame error",errorFlags);
+  if ( errorFlags & 8 )
+    writeLineEx(0,1,"%d informs of parity error",errorFlags);
+  if ( errorFlags & 16 )
+    writeLineEx(0,1,"%d informs of overrun error",errorFlags);
+  if ( errorFlags & 32 )
+    writeLineEx(0,1,"%d informs of receiver overrun error",errorFlags);
+  if ( errorFlags & 64 )
+    writeLineEx(0,1,"%d informs of break state",errorFlags);
+  if ( errorFlags & 128 )
+    writeLineEx(0,1,"%d informs of send timeout error",errorFlags);
+}
